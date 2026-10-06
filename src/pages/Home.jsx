@@ -1,144 +1,433 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { FaLeaf, FaBug, FaSeedling, FaShieldAlt } from 'react-icons/fa';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { FaBug, FaFlask, FaLeaf, FaSeedling, FaShieldAlt, FaTint, FaWhatsapp } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+
+const spring = { type: 'spring', stiffness: 120, damping: 18 };
+
+const leafPaths = [
+  { start: 0.12, d: 'M100 430 C 150 410 160 370 140 350 C 120 360 100 390 100 430' },
+  { start: 0.24, d: 'M100 370 C 50 350 40 310 62 292 C 82 304 100 332 100 370' },
+  { start: 0.36, d: 'M100 310 C 156 292 166 250 144 232 C 122 244 100 270 100 310' },
+  { start: 0.48, d: 'M100 250 C 48 232 36 190 60 172 C 82 186 100 214 100 250' },
+  { start: 0.6, d: 'M100 190 C 150 172 158 132 136 116 C 116 128 100 154 100 190' },
+  { start: 0.72, d: 'M100 140 C 58 124 46 88 70 72 C 88 86 100 108 100 140' },
+];
+
+function GrowingLeaf({ progress, start, d, reduce }) {
+  const scale = useTransform(progress, [start, Math.min(start + 0.14, 1)], [0, 1]);
+  return (
+    <motion.path
+      d={d}
+      fill="#1f9d55"
+      style={{ scale: reduce ? 1 : scale, transformOrigin: '100px 300px' }}
+    />
+  );
+}
+
+const devanagari = '०१२३४५६७८९';
+
+function toLatinDigits(value) {
+  return value.replace(/[०-९]/g, (digit) => String(devanagari.indexOf(digit)));
+}
+
+function toDevanagariDigits(value) {
+  return value.replace(/\d/g, (digit) => devanagari[digit]);
+}
+
+function StatValue({ value, reduce }) {
+  const latin = toLatinDigits(value);
+  const target = Number.parseInt(latin, 10);
+  const [shown, setShown] = useState(Number.isNaN(target) || reduce ? value : latin.startsWith('0') ? '00' : '0');
+
+  useEffect(() => {
+    if (reduce || Number.isNaN(target)) return undefined;
+    let frame = 0;
+    const start = performance.now();
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / 900);
+      const current = Math.round(target * (1 - (1 - progress) ** 3));
+      const padded = String(current).padStart(latin.length, '0');
+      setShown(/[०-९]/.test(value) ? toDevanagariDigits(padded) : padded);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [latin, reduce, target, value]);
+
+  return shown;
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: spring },
+};
 
 const Home = () => {
   const { t } = useLanguage();
+  const reduce = useReducedMotion();
+  const heroRef = useRef(null);
+  const growRef = useRef(null);
   const { scrollYProgress } = useScroll();
-  
-  const l1 = useTransform(scrollYProgress, [0.05, 0.15], [0, 1]);
-  const l2 = useTransform(scrollYProgress, [0.15, 0.25], [0, 1]);
-  const l3 = useTransform(scrollYProgress, [0.25, 0.35], [0, 1]);
-  const l4 = useTransform(scrollYProgress, [0.35, 0.45], [0, 1]);
-  const l5 = useTransform(scrollYProgress, [0.45, 0.55], [0, 1]);
-  const l6 = useTransform(scrollYProgress, [0.55, 0.65], [0, 1]);
-  const l7 = useTransform(scrollYProgress, [0.65, 0.75], [0, 1]);
-  const l8 = useTransform(scrollYProgress, [0.75, 0.85], [0, 1]);
-  const flowerScale = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
+  const { scrollYProgress: heroScroll } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  const videoY = useTransform(heroScroll, [0, 1], [0, 48]);
+  const copyY = useTransform(heroScroll, [0, 1], [0, 28]);
+  const { scrollYProgress: growProgress } = useScroll({
+    target: growRef,
+    offset: ['start 80%', 'end 40%'],
+  });
+
+  const stem = useTransform(growProgress, [0, 1], [0, 1]);
+  const bloom = useTransform(growProgress, [0.82, 1], [0, 1]);
 
   const features = [
-    { icon: <FaBug size={40} className="text-green-600 mb-4" />, title: t.home.feat1Title, desc: t.home.feat1Desc },
-    { icon: <FaSeedling size={40} className="text-green-600 mb-4" />, title: t.home.feat2Title, desc: t.home.feat2Desc },
-    { icon: <FaLeaf size={40} className="text-green-600 mb-4" />, title: t.home.feat3Title, desc: t.home.feat3Desc },
-    { icon: <FaShieldAlt size={40} className="text-green-600 mb-4" />, title: t.home.feat4Title, desc: t.home.feat4Desc }
+    { icon: FaBug, title: t.home.feat1Title, desc: t.home.feat1Desc, wide: true },
+    { icon: FaSeedling, title: t.home.feat2Title, desc: t.home.feat2Desc },
+    { icon: FaLeaf, title: t.home.feat3Title, desc: t.home.feat3Desc },
+    { icon: FaShieldAlt, title: t.home.feat4Title, desc: t.home.feat4Desc },
   ];
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      
-      {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-        {/* Background Video - h-[110%] and object-top crops the bottom watermark */}
-        <div className="absolute inset-0 z-0">
-          <video 
-            src="/hero_video.mp4"
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-[110%] object-cover object-top"
-          >
-            Your browser does not support the video tag.
-          </video>
-          {/* Overlay to darken video for better text readability */}
-          <div className="absolute inset-0 bg-black/60"></div>
-        </div>
+  const range = [
+    { icon: FaBug, title: t.products.c1, desc: t.products.c1d },
+    { icon: FaShieldAlt, title: t.products.c2, desc: t.products.c2d },
+    { icon: FaTint, title: t.products.c3, desc: t.products.c3d },
+    { icon: FaFlask, title: t.products.c4, desc: t.products.c4d },
+    { icon: FaSeedling, title: t.products.c5, desc: t.products.c5d },
+    { icon: FaLeaf, title: t.products.c6, desc: t.products.c6d },
+  ];
 
-        <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
+  const steps = [
+    { title: t.services.s1, desc: t.services.s1d },
+    { title: t.services.s2, desc: t.services.s2d },
+    { title: t.services.s3, desc: t.services.s3d },
+    { title: t.services.s4, desc: t.services.s4d },
+  ];
+
+  const stats = [
+    { n: t.home.stat1n, l: t.home.stat1l },
+    { n: t.home.stat2n, l: t.home.stat2l },
+    { n: t.home.stat3n, l: t.home.stat3l },
+    { n: t.home.stat4n, l: t.home.stat4l },
+  ];
+
+  const ribbon = [...range.map((item) => item.title), t.services.s1, t.services.s3];
+  const words = t.home.headline.split(' ');
+
+  const spotlight = (event) => {
+    const node = event.currentTarget;
+    const box = node.getBoundingClientRect();
+    node.style.setProperty('--mx', `${event.clientX - box.left}px`);
+    node.style.setProperty('--my', `${event.clientY - box.top}px`);
+  };
+
+  return (
+    <div className="overflow-x-hidden bg-cream text-ink">
+      {!reduce && (
+        <motion.div
+          style={{ scaleX: scrollYProgress }}
+          className="fixed top-0 left-0 z-[60] h-1 w-full origin-left bg-lime"
+        />
+      )}
+
+      <section ref={heroRef} className="relative flex min-h-[100svh] items-end overflow-hidden">
+        <motion.div className="absolute inset-0" style={reduce ? undefined : { y: videoY }}>
+          <video
+            src="/hero_video.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-[115%] w-full object-cover object-top"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07140d]/88 via-[#07140d]/55 to-[#07140d]/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07140d]/90 via-transparent to-[#07140d]/35" />
+          <div className="orb absolute -left-16 top-28 h-72 w-72 rounded-full bg-emerald-400/25 blur-3xl" />
+          <div className="orb-late absolute right-0 bottom-10 h-80 w-80 rounded-full bg-amber-300/20 blur-3xl" />
+          {!reduce && [14, 32, 58, 76].map((left, index) => (
+            <FaLeaf
+              key={left}
+              aria-hidden="true"
+              size={16 + index * 4}
+              className="leaf-float pointer-events-none absolute bottom-0 text-lime"
+              style={{ left: `${left}%`, animationDelay: `${index * 1.8}s`, animationDuration: `${14 + index * 2}s` }}
+            />
+          ))}
+        </motion.div>
+
+        <motion.div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-32 pb-16 sm:px-6 lg:px-8 lg:pb-24" style={reduce ? undefined : { y: copyY }}>
+          <motion.p
+            initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-lg"
+            transition={{ duration: 0.5 }}
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-lime backdrop-blur"
           >
-            {t.home.welcomePrefix}<span className="text-green-400">{t.home.brand}</span>{t.home.welcomeSuffix}
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-lg md:text-2xl mb-8 drop-shadow-md text-gray-200"
+            <span className="pulse-dot h-2 w-2 rounded-full bg-lime" />
+            {t.home.eyebrow}
+          </motion.p>
+
+          <p className="mb-3 py-1 text-sm font-semibold leading-normal tracking-[0.18em] text-white/70 uppercase">
+            {t.home.welcomePrefix}
+            <span className="font-display text-base leading-normal tracking-normal text-lime normal-case italic">{t.home.brand}</span>
+            {t.home.welcomeSuffix}
+          </p>
+
+          <h1 className="max-w-4xl font-display text-[2.6rem] leading-[1.05] font-semibold text-white sm:text-6xl lg:text-7xl">
+            {words.map((word, index) => (
+              <span key={`${word}-${index}`} className="mr-[0.28em] inline-block overflow-hidden px-[0.04em] pt-[0.14em] pb-[0.34em] -mt-[0.08em] -mb-[0.34em] align-bottom leading-none">
+                <motion.span
+                  className="inline-block"
+                  initial={reduce ? false : { y: '110%' }}
+                  animate={{ y: '0%' }}
+                  transition={{ ...spring, delay: reduce ? 0 : 0.08 + index * 0.05 }}
+                >
+                  {word}
+                </motion.span>
+              </span>
+            ))}
+          </h1>
+
+          <motion.p
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.6 }}
+            className="mt-6 max-w-xl text-lg leading-relaxed text-white/80 md:text-xl"
           >
             {t.home.subtitle}
           </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row justify-center gap-4"
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="mt-8 flex flex-col gap-3 sm:flex-row"
           >
-            <Link to="/products" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition shadow-lg text-center">
+            <Link
+              to="/products"
+              className="rounded-full bg-lime px-7 py-3.5 text-center text-base font-bold text-ink shadow-lg transition hover:-translate-y-0.5 hover:bg-white"
+            >
               {t.home.explore}
             </Link>
-            <a href={`https://wa.me/919876543210?text=Hello`} target="_blank" rel="noopener noreferrer" className="bg-white hover:bg-gray-100 text-green-700 px-8 py-3 rounded-full text-lg font-semibold transition shadow-lg text-center">
+            <a
+              href="https://wa.me/919876543210?text=Hello"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-base font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:text-ink"
+            >
+              <FaWhatsapp />
               {t.home.contactWa}
             </a>
           </motion.div>
-        </div>
-      </section>
 
-      {/* Why Choose Us / Features */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">{t.home.whyChoose}</h2>
-            <div className="w-24 h-1 bg-green-500 mx-auto rounded"></div>
-            <p className="mt-4 text-gray-600 max-w-2xl mx-auto">{t.home.whyDesc}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ y: -10 }}
-                className="bg-white p-8 rounded-xl shadow-md border border-gray-100 text-center transition"
+          <dl className="mt-12 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.l}
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 + index * 0.08 }}
+                className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur"
               >
-                <div className="flex justify-center">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                <dt className="font-display text-3xl text-lime">
+                  <StatValue value={stat.n} reduce={reduce} />
+                </dt>
+                <dd className="mt-1 text-sm text-white/75">{stat.l}</dd>
               </motion.div>
             ))}
+          </dl>
+
+          <p className="mt-10 hidden items-center gap-3 text-xs font-semibold tracking-[0.22em] text-white/50 uppercase sm:flex">
+            <span className="relative h-12 w-px overflow-hidden bg-white/25">
+              <motion.span
+                className="absolute inset-x-0 top-0 h-4 bg-lime"
+                animate={reduce ? undefined : { y: [0, 32, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </span>
+            {t.home.scrollCue}
+          </p>
+        </motion.div>
+      </section>
+
+      <div className="overflow-hidden border-y border-ink/10 bg-ink py-4 text-cream">
+        <div className="marquee-track gap-10">
+          {[...ribbon, ...ribbon].map((label, index) => (
+            <span key={`${label}-${index}`} className="flex items-center gap-10 text-sm font-semibold tracking-wide">
+              {label}
+              <span className="h-1.5 w-1.5 rounded-full bg-lime" />
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <motion.div
+          variants={{ hidden: {}, show: { transition: { staggerChildren: reduce ? 0 : 0.08 } } }}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.3 }}
+          className="mb-12 max-w-2xl"
+        >
+          <motion.h2 variants={fadeUp} className="font-display text-4xl leading-tight text-ink md:text-5xl">
+            {t.home.whyChoose}
+          </motion.h2>
+          <motion.p variants={fadeUp} className="mt-4 text-lg leading-relaxed text-ink/70">
+            {t.home.whyDesc}
+          </motion.p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <motion.article
+                key={feature.title}
+                onMouseMove={spotlight}
+                initial={reduce ? false : { opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                whileHover={reduce ? undefined : { y: -6 }}
+                transition={spring}
+                className={`spotlight rounded-3xl border border-ink/8 p-7 shadow-sm ${feature.wide ? 'md:col-span-2' : ''}`}
+              >
+                <motion.div
+                  whileHover={reduce ? undefined : { rotate: -8, scale: 1.08 }}
+                  transition={spring}
+                  className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-lime"
+                >
+                  <Icon size={24} />
+                </motion.div>
+                <h3 className="font-display text-2xl text-ink">{feature.title}</h3>
+                <p className="mt-3 max-w-md leading-relaxed text-ink/70">{feature.desc}</p>
+              </motion.article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="bg-ink py-20 text-cream lg:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div className="max-w-2xl">
+              <p className="text-sm font-bold tracking-[0.2em] text-lime uppercase">{t.home.rangeKicker}</p>
+              <h2 className="mt-3 font-display text-4xl md:text-5xl">{t.home.rangeTitle}</h2>
+              <p className="mt-4 text-lg text-white/70">{t.home.rangeDesc}</p>
+            </div>
+            <Link
+              to="/products"
+              className="w-fit whitespace-nowrap rounded-full bg-lime px-6 py-3 font-bold text-ink transition hover:bg-white"
+            >
+              {t.home.viewAll}
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {range.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <motion.article
+                  key={item.title}
+                  initial={reduce ? false : { opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ ...spring, delay: reduce ? 0 : (index % 3) * 0.06 }}
+                  whileHover={reduce ? undefined : { y: -6 }}
+                  className="group rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-lime/40 hover:bg-white/10"
+                >
+                  <div className="mb-8 flex items-center justify-between">
+                    <span className="font-display text-lime/80">{String(index + 1).padStart(2, '0')}</span>
+                    <Icon className="text-lime" size={22} />
+                  </div>
+                  <h3 className="font-display text-2xl">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-white/65">{item.desc}</p>
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-green-700 py-16 text-white text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-6">{t.home.ctaTitle}</h2>
-          <p className="text-lg mb-8 text-green-100">{t.home.ctaDesc}</p>
-          <Link to="/contact" className="bg-white text-green-700 font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition shadow-lg">
-            {t.home.getInTouch}
-          </Link>
+      <section ref={growRef} className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-28">
+        <div>
+          <p className="text-sm font-bold tracking-[0.2em] text-primary uppercase">{t.home.stepsKicker}</p>
+          <h2 className="mt-3 font-display text-4xl text-ink md:text-5xl">{t.home.stepsTitle}</h2>
+          <p className="mt-4 max-w-xl text-lg text-ink/70">{t.home.stepsDesc}</p>
+          <ol className="relative mt-10 space-y-6">
+            <motion.span
+              aria-hidden="true"
+              className="absolute top-2 bottom-2 left-5 w-px origin-top bg-ink/15"
+              style={{ scaleY: reduce ? 1 : growProgress }}
+            />
+            {steps.map((step, index) => (
+              <motion.li
+                key={step.title}
+                initial={reduce ? false : { opacity: 0, x: -16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ ...spring, delay: reduce ? 0 : index * 0.05 }}
+                className="flex gap-4"
+              >
+                <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink font-display text-lime">
+                  {index + 1}
+                </span>
+                <div>
+                  <h3 className="text-xl font-bold text-ink">{step.title}</h3>
+                  <p className="mt-1 leading-relaxed text-ink/70">{step.desc}</p>
+                </div>
+              </motion.li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="relative hidden h-[520px] overflow-hidden rounded-[2rem] bg-gradient-to-b from-emerald-100 to-cream lg:block">
+          <div className="orb absolute top-10 left-10 h-40 w-40 rounded-full bg-lime/50 blur-2xl" />
+          <svg viewBox="0 0 200 520" className="absolute inset-x-0 bottom-0 mx-auto h-full w-auto">
+            <motion.path
+              d="M100 520 C 108 400 92 320 100 240 C 108 170 96 110 100 48"
+              fill="none"
+              stroke="#123524"
+              strokeWidth="7"
+              strokeLinecap="round"
+              style={{ pathLength: reduce ? 1 : stem }}
+            />
+            {leafPaths.map((leaf) => (
+              <GrowingLeaf key={leaf.start} progress={growProgress} reduce={reduce} {...leaf} />
+            ))}
+            <motion.g style={{ scale: reduce ? 1 : bloom, transformOrigin: '100px 48px' }}>
+              <circle cx="100" cy="36" r="10" fill="#e7b34c" />
+              <circle cx="122" cy="52" r="10" fill="#e7b34c" />
+              <circle cx="112" cy="74" r="10" fill="#e7b34c" />
+              <circle cx="88" cy="74" r="10" fill="#e7b34c" />
+              <circle cx="78" cy="52" r="10" fill="#e7b34c" />
+              <circle cx="100" cy="56" r="8" fill="#9a6412" />
+            </motion.g>
+          </svg>
         </div>
       </section>
 
-      {/* Growing Plant Animation */}
-      <svg 
-        viewBox="-20 0 140 500" 
-        preserveAspectRatio="xMidYMax meet"
-        className="fixed right-2 md:right-8 bottom-0 z-40 pointer-events-none drop-shadow-lg h-[60vh] max-h-[500px] w-auto opacity-40 md:opacity-100"
-      >
-        <motion.path d="M 50 500 Q 60 350 40 200 T 50 50" fill="transparent" stroke="#16a34a" strokeWidth="6" strokeLinecap="round" style={{ pathLength: scrollYProgress }} />
-        <motion.path d="M 53 450 C 78 445 83 425 83 425 C 83 425 63 425 53 450" fill="#15803d" style={{ scale: l1, transformOrigin: '53px 450px' }} />
-        <motion.path d="M 56 400 C 31 395 26 375 26 375 C 26 375 46 375 56 400" fill="#15803d" style={{ scale: l2, transformOrigin: '56px 400px' }} />
-        <motion.path d="M 58 350 C 83 345 88 325 88 325 C 88 325 68 325 58 350" fill="#15803d" style={{ scale: l3, transformOrigin: '58px 350px' }} />
-        <motion.path d="M 50 300 C 25 295 20 275 20 275 C 20 275 40 275 50 300" fill="#15803d" style={{ scale: l4, transformOrigin: '50px 300px' }} />
-        <motion.path d="M 42 250 C 67 245 72 225 72 225 C 72 225 52 225 42 250" fill="#15803d" style={{ scale: l5, transformOrigin: '42px 250px' }} />
-        <motion.path d="M 40 200 C 15 195 10 175 10 175 C 10 175 30 175 40 200" fill="#15803d" style={{ scale: l6, transformOrigin: '40px 200px' }} />
-        <motion.path d="M 45 150 C 70 145 75 125 75 125 C 75 125 55 125 45 150" fill="#15803d" style={{ scale: l7, transformOrigin: '45px 150px' }} />
-        <motion.path d="M 48 100 C 23 95 18 75 18 75 C 18 75 38 75 48 100" fill="#15803d" style={{ scale: l8, transformOrigin: '48px 100px' }} />
-        <motion.g style={{ scale: flowerScale, transformOrigin: '50px 50px' }}>
-          <circle cx="50" cy="32" r="8" fill="#fbbf24" />
-          <circle cx="67" cy="44" r="8" fill="#fbbf24" />
-          <circle cx="61" cy="62" r="8" fill="#fbbf24" />
-          <circle cx="39" cy="62" r="8" fill="#fbbf24" />
-          <circle cx="33" cy="44" r="8" fill="#fbbf24" />
-          <circle cx="50" cy="50" r="6" fill="#b45309" />
-        </motion.g>
-      </svg>
+      <section className="relative overflow-hidden bg-ink px-4 py-20 text-center text-cream sm:px-6 lg:py-28">
+        <div className="orb absolute -top-10 left-1/4 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+        <div className="orb-late absolute right-10 bottom-0 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
+        <motion.div
+          className="relative mx-auto max-w-3xl"
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={spring}
+        >
+          <h2 className="font-display text-4xl leading-tight md:text-6xl">{t.home.ctaTitle}</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-white/75">{t.home.ctaDesc}</p>
+          <Link
+            to="/contact"
+            className="mt-8 inline-flex rounded-full bg-lime px-8 py-3.5 text-base font-bold text-ink transition hover:-translate-y-0.5 hover:bg-white"
+          >
+            {t.home.getInTouch}
+          </Link>
+        </motion.div>
+      </section>
     </div>
   );
 };

@@ -1,57 +1,61 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
+import PageHero from '../components/PageHero';
+
+const spring = { type: 'spring', stiffness: 120, damping: 18 };
 
 const About = () => {
   const { t } = useLanguage();
+  const reduce = useReducedMotion();
+
+  const pillars = [
+    { title: t.about.missionTitle, desc: t.about.missionDesc },
+    { title: t.about.visionTitle, desc: t.about.visionDesc },
+  ];
+
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      <div className="bg-green-700 py-16 text-white text-center">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-bold"
+    <div className="min-h-screen bg-cream text-ink">
+      <PageHero kicker={t.home.brand} title={t.about.title} subtitle={t.about.subtitle} />
+
+      <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={spring}
+          className="relative overflow-hidden rounded-[2rem] bg-gradient-to-b from-emerald-100 to-cream p-8"
         >
-          {t.about.title}
-        </motion.h1>
-        <p className="mt-4 text-green-100 max-w-2xl mx-auto px-4">
-          {t.about.subtitle}
-        </p>
-      </div>
+          <div className="orb absolute top-6 left-6 h-32 w-32 rounded-full bg-lime/60 blur-2xl" />
+          <img src="/logo.webp" alt="Surekha Krushi Udyog" className="relative mx-auto w-full max-w-sm rounded-3xl bg-white p-6" />
+        </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex flex-col md:flex-row items-center gap-12">
-          <div className="w-full md:w-1/2 flex justify-center">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md"
-            >
-              <img src="/logo.webp" alt="Surekha Krushi Udyog Logo" className="w-full h-auto rounded" />
-            </motion.div>
-          </div>
-          <div className="w-full md:w-1/2">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">{t.about.storyTitle}</h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed text-lg">
-              <p>{t.about.story1}</p>
-              <p>{t.about.story2}</p>
-              <p>{t.about.story3}</p>
-            </div>
+        <div>
+          <h2 className="font-display text-4xl">{t.about.storyTitle}</h2>
+          <div className="mt-6 space-y-4 text-lg leading-relaxed text-ink/70">
+            <p>{t.about.story1}</p>
+            <p>{t.about.story2}</p>
+            <p>{t.about.story3}</p>
           </div>
         </div>
+      </section>
 
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white p-8 rounded-xl shadow border-t-4 border-green-500">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">{t.about.missionTitle}</h3>
-            <p className="text-gray-600">{t.about.missionDesc}</p>
-          </div>
-          <div className="bg-white p-8 rounded-xl shadow border-t-4 border-green-500">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">{t.about.visionTitle}</h3>
-            <p className="text-gray-600">{t.about.visionDesc}</p>
-          </div>
-        </div>
-      </div>
+      <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-20 sm:px-6 md:grid-cols-2 lg:px-8">
+        {pillars.map((item, index) => (
+          <motion.article
+            key={item.title}
+            initial={reduce ? false : { opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ ...spring, delay: reduce ? 0 : index * 0.06 }}
+            className="rounded-3xl border border-ink/10 bg-white p-8"
+          >
+            <p className="font-display text-2xl text-[#0f7a3c]">{String(index + 1).padStart(2, '0')}</p>
+            <h3 className="mt-3 font-display text-3xl">{item.title}</h3>
+            <p className="mt-3 leading-relaxed text-ink/70">{item.desc}</p>
+          </motion.article>
+        ))}
+      </section>
     </div>
   );
 };

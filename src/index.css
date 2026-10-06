@@ -1,13 +1,78 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #16a34a; /* green-600 */
-  --color-primary-dark: #15803d; /* green-700 */
-  --color-secondary: #facc15; /* yellow-400 */
+  --color-primary: #1f9d55;
+  --color-primary-dark: #123524;
+  --color-secondary: #e7b34c;
+  --color-ink: #07140d;
+  --color-cream: #f6f3ea;
+  --color-lime: #c6f26d;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
-html, body {
+html, body, #root {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(28px, -20px, 0) scale(1.08); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.orb {
+  animation: drift 16s ease-in-out infinite;
+}
+
+.orb-late {
+  animation: drift 20s ease-in-out infinite reverse;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 36s linear infinite;
+}
+
+.spotlight {
+  background:
+    radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(198, 242, 109, 0.28), transparent 42%),
+    #fff;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.7); opacity: 0.35; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes leaf-float {
+  0% { transform: translate3d(0, 24px, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 0.55; }
+  100% { transform: translate3d(36px, -105vh, 0) rotate(32deg); opacity: 0; }
+}
+
+.leaf-float {
+  animation: leaf-float 16s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .orb, .orb-late, .marquee-track, .pulse-dot, .leaf-float { animation: none; }
 }
