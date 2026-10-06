@@ -1,105 +1,117 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
+import { motion, useReducedMotion } from 'framer-motion';
+import { FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaWhatsapp } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+import PageHero from '../components/PageHero';
+
+const spring = { type: 'spring', stiffness: 120, damping: 18 };
 
 const Contact = () => {
   const { t } = useLanguage();
+  const reduce = useReducedMotion();
+
+  const details = [
+    { icon: FaMapMarkerAlt, title: t.contact.locTitle, body: 'Main Market Road, Krushi Nagar, Maharashtra, India 411001' },
+    { icon: FaPhoneAlt, title: t.contact.phoneTitle, body: '+91 98765 43210', href: 'tel:+919876543210' },
+    { icon: FaEnvelope, title: t.contact.emailTitle, body: 'info@surekhakrushiudyog.shop', href: 'mailto:info@surekhakrushiudyog.shop' },
+  ];
 
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      <div className="bg-green-700 py-16 text-white text-center">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-bold"
-        >
-          {t.contact.title}
-        </motion.h1>
-        <p className="mt-4 text-green-100 max-w-2xl mx-auto px-4">
-          {t.contact.subtitle}
-        </p>
-      </div>
+    <div className="min-h-screen bg-cream text-ink">
+      <PageHero kicker={t.home.brand} title={t.contact.title} subtitle={t.contact.subtitle} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-8">{t.contact.getInTouch}</h2>
-            <div className="space-y-8">
-              <div className="flex items-start">
-                <div className="bg-green-100 p-4 rounded-full text-green-600 mr-6">
-                  <FaMapMarkerAlt size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">{t.contact.locTitle}</h3>
-                  <p className="text-gray-600">Main Market Road, Krushi Nagar<br />Maharashtra, India 411001</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="bg-green-100 p-4 rounded-full text-green-600 mr-6">
-                  <FaPhoneAlt size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">{t.contact.phoneTitle}</h3>
-                  <p className="text-gray-600">+91 98765 43210</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="bg-green-100 p-4 rounded-full text-green-600 mr-6">
-                  <FaEnvelope size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">{t.contact.emailTitle}</h3>
-                  <p className="text-gray-600">info@surekhakrushiudyog.shop</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="bg-green-100 p-4 rounded-full text-green-600 mr-6">
-                  <FaWhatsapp size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-1">{t.contact.waTitle}</h3>
-                  <p className="text-gray-600 mb-2">{t.contact.waDesc}</p>
-                  <a 
-                    href="https://wa.me/919876543210" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-block bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-semibold transition"
-                  >
-                    {t.contact.waBtn}
-                  </a>
-                </div>
-              </div>
-            </div>
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
+        <div>
+          <h2 className="font-display text-4xl">{t.contact.getInTouch}</h2>
+          <div className="mt-8 space-y-4">
+            {details.map((item, index) => {
+              const Icon = item.icon;
+              const content = (
+                <>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-lime">
+                    <Icon size={18} />
+                  </span>
+                  <span>
+                    <span className="block font-bold">{item.title}</span>
+                    <span className="mt-1 block text-ink/70">{item.body}</span>
+                  </span>
+                </>
+              );
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={reduce ? false : { opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ ...spring, delay: reduce ? 0 : index * 0.05 }}
+                >
+                  {item.href ? (
+                    <a href={item.href} className="flex gap-4 rounded-3xl border border-ink/10 bg-white p-5 transition hover:-translate-y-0.5">
+                      {content}
+                    </a>
+                  ) : (
+                    <div className="flex gap-4 rounded-3xl border border-ink/10 bg-white p-5">{content}</div>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">{t.contact.formTitle}</h2>
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.contact.name}</label>
-                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition" placeholder={t.contact.namePh} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.contact.phone}</label>
-                <input type="tel" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition" placeholder={t.contact.phonePh} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t.contact.msg}</label>
-                <textarea rows="4" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-green-500 focus:border-green-500 outline-none transition" placeholder={t.contact.msgPh}></textarea>
-              </div>
-              <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition shadow-md">
-                {t.contact.send}
-              </button>
-            </form>
-          </div>
-
+          <a
+            href="https://wa.me/919876543210"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-lime px-6 py-3 font-bold text-ink transition hover:bg-white"
+          >
+            <FaWhatsapp />
+            {t.contact.waBtn}
+          </a>
+          <p className="mt-3 text-sm text-ink/60">{t.contact.waDesc}</p>
         </div>
-      </div>
+
+        <motion.form
+          initial={reduce ? false : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={spring}
+          className="rounded-[2rem] bg-ink p-6 text-cream sm:p-8"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <h2 className="font-display text-3xl">{t.contact.formTitle}</h2>
+          <div className="mt-6 space-y-5">
+            <label className="block text-sm font-semibold text-white/80">
+              {t.contact.name}
+              <input
+                type="text"
+                required
+                placeholder={t.contact.namePh}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-lime"
+              />
+            </label>
+            <label className="block text-sm font-semibold text-white/80">
+              {t.contact.phone}
+              <input
+                type="tel"
+                required
+                placeholder={t.contact.phonePh}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-lime"
+              />
+            </label>
+            <label className="block text-sm font-semibold text-white/80">
+              {t.contact.msg}
+              <textarea
+                rows="5"
+                required
+                placeholder={t.contact.msgPh}
+                className="mt-2 w-full resize-y rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-lime"
+              />
+            </label>
+            <button type="submit" className="w-full rounded-full bg-lime py-3.5 font-bold text-ink transition hover:bg-white">
+              {t.contact.send}
+            </button>
+          </div>
+        </motion.form>
+      </section>
     </div>
   );
 };

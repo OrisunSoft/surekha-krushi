@@ -1,66 +1,61 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { FaComments, FaLeaf, FaSearch, FaTruck, FaWhatsapp } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+import PageHero from '../components/PageHero';
+
+const spring = { type: 'spring', stiffness: 120, damping: 18 };
+const icons = [FaComments, FaLeaf, FaSearch, FaTruck];
 
 const Services = () => {
   const { t } = useLanguage();
-  
+  const reduce = useReducedMotion();
+
   const services = [
     { title: t.services.s1, desc: t.services.s1d },
     { title: t.services.s2, desc: t.services.s2d },
     { title: t.services.s3, desc: t.services.s3d },
-    { title: t.services.s4, desc: t.services.s4d }
+    { title: t.services.s4, desc: t.services.s4d },
   ];
 
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      <div className="bg-green-700 py-16 text-white text-center">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-bold"
-        >
-          {t.services.title}
-        </motion.h1>
-        <p className="mt-4 text-green-100 max-w-2xl mx-auto px-4">
-          {t.services.subtitle}
-        </p>
-      </div>
+    <div className="min-h-screen bg-cream text-ink">
+      <PageHero kicker={t.home.stepsKicker} title={t.services.title} subtitle={t.services.subtitle} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="space-y-12">
-          {services.map((svc, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className={`flex flex-col md:flex-row bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 ${idx % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
+      <section className="mx-auto grid max-w-7xl gap-4 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20">
+        {services.map((svc, index) => {
+          const Icon = icons[index];
+          return (
+            <motion.article
+              key={svc.title}
+              initial={reduce ? false : { opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              whileHover={reduce ? undefined : { y: -6 }}
+              transition={{ ...spring, delay: reduce ? 0 : (index % 2) * 0.06 }}
+              className="flex flex-col rounded-3xl border border-white/10 bg-ink p-7 text-cream"
             >
-              <div className="w-full md:w-1/3 bg-green-50 flex items-center justify-center p-8">
-                <div className="w-24 h-24 bg-green-200 rounded-full flex items-center justify-center text-green-600 text-3xl font-bold">
-                  0{idx + 1}
-                </div>
+              <div className="mb-8 flex items-center justify-between">
+                <span className="font-display text-4xl text-lime">{String(index + 1).padStart(2, '0')}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-lime">
+                  <Icon size={20} />
+                </span>
               </div>
-              <div className="w-full md:w-2/3 p-8 flex flex-col justify-center">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">{svc.title}</h2>
-                <p className="text-gray-600 text-lg leading-relaxed mb-6">{svc.desc}</p>
-                <div>
-                  <a 
-                    href={`https://wa.me/919876543210?text=Service: ${svc.title}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded transition shadow"
-                  >
-                    {t.services.req}
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+              <h2 className="font-display text-3xl">{svc.title}</h2>
+              <p className="mt-3 flex-1 leading-relaxed text-white/70">{svc.desc}</p>
+              <a
+                href={`https://wa.me/919876543210?text=Service: ${svc.title}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-lime px-5 py-3 text-sm font-bold text-ink transition hover:bg-white"
+              >
+                <FaWhatsapp />
+                {t.services.req}
+              </a>
+            </motion.article>
+          );
+        })}
+      </section>
     </div>
   );
 };
